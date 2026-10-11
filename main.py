@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 import sys
 from campusflow.storage import load_tickets, save_tickets, DEFAULT_DATA_FILE
 from campusflow.tickets import create_ticket, ALLOWED_CATEGORIES, ALLOWED_URGENCIES
