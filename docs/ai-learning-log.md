@@ -1,149 +1,74 @@
-## Fellow: Onminyi Andrew Okala 
-### Interaction #1 — Input validation and safe mutation
-Problem: Understanding how to reject invalid inputs withour corrupting stored tickets.
-
-
-My initial understanding: Using a function to validate the modified ticket collection
-
-
-Prompt to AI: How do i reject invalid inputs without breaking initial data collection
-
-
-Useful AI guidance: Validate all inputs before modifying the ticket collection.
-
-
-My independent experiment/test: Run the `test_tickets` test.
-
-
-Verification source or result: test_blank_title_rejected (test_tickets.TicketTests.test_blank_title_rejected) ... ok
-test_boolean_is_not_valid_count (test_tickets.TicketTests.test_boolean_is_not_valid_count) ... ok
-test_creation_defaults_and_normalization (test_tickets.TicketTests.test_creation_defaults_and_normalization) ... ok
-test_critical_priority (test_tickets.TicketTests.test_critical_priority) ... ok
-test_high_priority (test_tickets.TicketTests.test_high_priority) ... ok
-test_invalid_category_rejected (test_tickets.TicketTests.test_invalid_category_rejected) ... ok
-test_lookup_case_insensitive (test_tickets.TicketTests.test_lookup_case_insensitive) ... ok
-test_lookup_unknown_id (test_tickets.TicketTests.test_lookup_unknown_id) ... ok
-test_low_priority (test_tickets.TicketTests.test_low_priority) ... ok
-test_medium_priority (test_tickets.TicketTests.test_medium_priority) ... ok
-test_sequential_ids_after_reload_shape (test_tickets.TicketTests.test_sequential_ids_after_reload_shape) ... ok
-test_zero_users_does_not_mutate (test_tickets.TicketTests.test_zero_users_does_not_mutate) ... ok
-
-----------------------------------------------------------------------
-Ran 12 tests in 0.001s
-
-OK
-
-
-Decision: Accepted
-
-
-Related file/commit: `tests/test_ticket.py`
-
-
-What I can now explain without AI: Rejecting invalid input is not enough if the function has already modified the application state.
-
-
-
-
-## Fellow: Onminyi Andrew Okala
-### Interaction #2 — Understanding `and` and `or` in python priority calculation
-
-
-Problem: I neede to understand how Python's logical operators (`and` and `or`) works whan checking through multiple conditions, in regards to ticket priority in CampusFlow.
-
-
-My initial understanding: I understood that `and` requires both conditions to be true, while `or` requires at least on condition to be true. However, I needed to understand why order of conditions matters when applying it to multiple priority rules.
-
-
-Prompt to AI: Explain how Python's `and` and `or` works when evaluating multiple conditions. Use a small example related to CampusFlow. explain why order of `if` statements matters when multiple conditions sould be true.
-
-
-Useful AI guidance: It explained that: `and` evaluates to true when both conditions a true, `or` evaluates to true when at least on condition is true, Python evaluates `if` and `elif` conditions in order, whan a matching branch executes, subsequent `elif` branches are skipped, a function stops executing when it encounters `return`.
-
-
-My independent experiment/test: I created a file called `logic_experiment` and ran:
-
-
-age = 20
-has_id = True
-
-if age >= 18 and has_id:
-    print("Access granted")
-else:
-    print("Access denied")
-
-temperature = 35
-is_sunny = False
-
-if temperature >= 30 or is_sunny:
-    print("Hot or sunny weather")
-else:
-    print("Normal weather")
-
-
-Verification source or result:
-
-
-`Access granted`
-`Hot or sunny weather`
-
-
-Decision: I accepted the explanation of logical operators because it is consistent with the Python's documented behaviour.
-
-
-Related file/commit: `campusflow/tickets.py` and `tests/test_tickets.py` related function is `calculate_priority()`
-
-
-What I can now explain without AI: The `and` operator checks whether two conditions are both true, while `or` checks whether at least one condition is true.
-
-
-
-
-## Fellow: Onminyi Andrew Okala
-### Interaction #1 — Evaluating AI Guidance Input Validation
-
-
-Problem: I needed to understand how Python validates integer values and why `isinstance()` might not be sufficient when validating the number of affected users in CampusFlow.
-
-
-My initial understanding: I understood that `isinstance()` checks whether a value belongs to a particular data type.
-
-Prompt to AI: Explain the difference between `isinstance(value, int)` and `type(value) is int` in Python, Use small unrelated example involving input validation. explain whether booleans can pass integer validation and how I can independently verify the behaviour.
-
-
-Useful AI guidance: AI explained that Python's `bool` type inherits from `int`, therefore `isinstance(True, int)` returns `True`, However: `type(True) is int` returns `False` This distinction matters because CampusFlow requires a positive integer representating the number of affected users. Although `True` behaves like integer `1` in some Python operations, it should not represent one affected user.
-
-
-My independent experiment/test: I created a file called `validation_experiment.py` and Ran:
-
-
-values = [10, 0, -5, 2.5, "10", True, False]
-
-
-for value in values:
-    print(
-        repr(value),
-        isinstance(value, int),
-        type(value) is int
-    )
-
-
-Verification source or result: 
-
-
-10 True True
-0 True True
--5 True True
-2.5 False False
-'10' False False
-True True False
-False True False
-
-
-Decision: using only `isinstance(affected_users, int)` is insufficient for CampusFlow because it accepts boolean values. I therefore prefer `type(affected_users) is in` combined with `affected_users > 0`. This approach rejects booleans, zero, negative numbers, decimals, and strings.
-
-
-Related file/commit: `campusflow/tickets.py` and `tests/test_tickets.py` related function is `validate_ticket()`
-
-
-What I can now explain without AI: In Python, boolean values are subclassess of integers. This means `isinstance(True, int)` returns `True`, even though `True` is a boolean.
+# CampusFlow — AI Learning Log
+
+This document records the AI-assisted learning cycles and critical evaluations conducted during the sprint.
+
+---
+
+## Fellow: Victor Ejike (Engineer B — Workflow, Lifecycle, Queue, & Reports)
+
+### Interaction #1 — Multi-key Sorting & Priority Tie-Breaking in Python
+* **Problem:** In Feature F5 (`get_work_queue`), tickets must be sorted by custom priority hierarchy (`critical` $\rightarrow$ `high` $\rightarrow$ `medium` $\rightarrow$ `low`), and ties must be broken by earlier numeric ID (e.g., `T002` before `T010`, rather than alphabetical string sorting where `"T010"` might precede `"T02"`).
+* **My initial understanding:** I knew Python's `list.sort()` accepts a `key` parameter, but I wasn't certain how to combine a non-alphabetical priority dictionary with numeric tie-breaking without writing multiple nested sort passes.
+* **Prompt to AI:** *"How does Python sort using a tuple key when I have a custom priority mapping and want to break ties using numeric IDs?"*
+* **Useful AI guidance:** Python compares tuples element-by-element (`(key1, key2)`). If `key1` matches, Python naturally falls back to comparing `key2`. A dictionary mapping priorities to rank integers (`{"critical": 0, "high": 1, ...}`) combined with `int(ticket["id"][1:])` produces clean, stable ordering in a single pass.
+* **My independent experiment/test:** In an interactive Python session, I tested sorting sample records with identical priorities:
+  ```python
+  priority_order = {"high": 1}
+  items = [
+      {"id": "T010", "priority": "high"},
+      {"id": "T002", "priority": "high"},
+  ]
+  items.sort(
+      key=lambda x: (priority_order[x["priority"]], int(x["id"][1:]))
+  )
+  print([x["id"] for x in items])  # Output: ['T002', 'T010']
+```
+* **Verification source or result:** Added `test_queue_priority_and_ticket_id_order` and `test_queue_does_not_reorder_original_list` in `tests/test_workflow.py`. Both assertions passed.
+* **Decision:** Accepted and implemented the tuple-key sorting pattern in `campusflow/workflow.py`.
+* **Related file/commit:** `campusflow/workflow.py` (`get_work_queue`), `tests/test_workflow.py`.
+* **What I can now explain without AI:** How Python tuple comparisons work for multi-criteria sorting and how to extract integer values from formatted string identifiers for numeric ordering.
+
+---
+
+### Interaction #2 — Structuring Report Aggregations and Empty-State Handling
+* **Problem:** In Feature F6 (`campusflow/reports.py`), the system must summarize ticket totals and breakdowns by status and priority, and must handle zero tickets (`[]`) gracefully without crashing or throwing missing key errors.
+* **My initial understanding:** I initially thought of looping over tickets and building a dictionary on the fly, but that could result in missing status/priority keys when ticket counts are zero.
+* **Prompt to AI:** *"What is the best way to structure ticket summary aggregation in Python to ensure predictable schema keys and safe handling when the list is empty?"*
+* **Useful AI guidance:** Pre-initialize the result dictionary with default counters set to zero for all expected statuses and priorities (`open`, `in_progress`, `resolved` and `critical`, `high`, `medium`, `low`). This guarantees consistent dictionary keys even when `tickets` is empty.
+* **My independent experiment/test:** Created `generate_ticket_summary([])` with pre-defined keys and asserted that all counts equal 0:
+  ```python
+  summary = generate_ticket_summary([])
+  assert summary["total"] == 0
+  assert summary["by_status"]["open"] == 0
+```
+* **Verification source or result:** Added `test_empty_ticket_list` and `test_summary_with_tickets` in `tests/test_reports.py`. All tests passed.
+* **Decision:** Accepted and implemented the pre-initialized dictionary pattern, and added case normalization (`.lower()`) so variations like `"OPEN"` or `"Critical"` increment the correct buckets.
+* **Related file/commit:** `campusflow/reports.py`, `tests/test_reports.py`.
+* **What I can now explain without AI:** How pre-defining schema dictionaries prevents missing-key errors and simplifies consumer code (like CLI renderers) when processing empty collections.
+
+---
+
+### Interaction #3 — State Machine Invariants & Catching Flawed AI Logic (CRITICAL EVALUATION)
+* **Problem:** In Feature F4 (`change_status` and `reopen_ticket`), we need to strictly enforce lifecycle transitions (`open` $\rightarrow$ `in_progress` $\rightarrow$ `resolved`), reject unassigned tickets from entering `in_progress`, and prevent direct modification of resolved tickets without reopening.
+* **My initial understanding:** The function must verify that preconditions are satisfied before changing state.
+* **Prompt to AI:** *"Help draft validation logic for change_status and reopen_ticket in Python with error checks for unassigned tickets and resolved tickets."*
+* **AI guidance received (Flawed Draft):** The generated code draft contained multiple critical defects:
+  1. **Inverted conditional:** It checked `if ticket["status"] == "open": raise ValueError(...)` instead of `!= "open"`, meaning open tickets were blocked from progressing!
+  2. **Key casing typo:** It accessed `ticket["Assigned_to"]` (uppercase `A`), which caused runtime `KeyError` exceptions when checking dictionary keys.
+  3. **Callable name confusion:** In `reopen_ticket`, it wrote `ticket = ticket_id(tickets, ticket_id)`, attempting to call the string variable `ticket_id` as a function!
+  4. **Case sensitivity:** In `assign_ticket`, it compared against `"Resolved"` with uppercase `R`, failing to catch `"resolved"` tickets.
+* **My independent experiment/test:** Rather than blindly trusting the draft, I ran the automated test suite:
+  ```bash
+  python3 -m unittest discover -s tests -v
+```
+  The test runner immediately caught the defects:
+  ```
+  ERROR: test_assigned_ticket_can_progress (ValueError: Ticket must be open before works begins.)
+  ERROR: test_cannot_reopen_open_ticket (TypeError: 'str' object is not callable)
+  ERROR: test_reopen_resolved_ticket (TypeError: 'str' object is not callable)
+  FAIL: test_reject_assignment_to_resolved_ticket (AssertionError: ValueError not raised)
+  ```
+* **Verification source or result:** Traced each failure through the unittest stack traces, inspected the logic, corrected the inverted conditional to `ticket["status"].lower() != "open"`, changed `ticket["Assigned_to"]` to `not ticket.get("assigned_to")`, and corrected the function call to `find_ticket(tickets, ticket_id)`. Re-ran the test suite and confirmed 19/19 tests passed.
+* **Decision:** **REJECTED and CORRECTED the AI suggestions.**
+* **Related file/commit:** `campusflow/workflow.py`, `tests/test_workflow.py`.
+* **What I can now explain without AI:** How to design invariant checks in state machine transitions, the necessity of case normalization when inspecting dictionary values, and why rigorous unit tests are non-negotiable when evaluating AI-generated code.

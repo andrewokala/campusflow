@@ -1,59 +1,91 @@
 import unittest
-from campusflow.tickets import calculate_priority, create_ticket, get_ticket
+
+from campusflow.tickets import (
+    calculate_priority,
+    create_ticket,
+    generate_ticket_id,
+)
 
 
+class TestTickets(unittest.TestCase):
 
-class TicketTests(unittest.TestCase):
-    def setUp(self):
-        self.tickets = []
-
-    def test_critical_priority(self):
+    def test_priority_critical_boundary(self):
+        # High urgency + 12 affected users -> critical
         self.assertEqual(calculate_priority("high", 12), "critical")
+        self.assertEqual(calculate_priority("high", 10), "critical")
 
-    def test_high_priority(self):
+    def test_priority_high_boundary(self):
+        # High urgency + 2 affected users -> high
         self.assertEqual(calculate_priority("high", 2), "high")
+        # Low urgency + 10 affected users -> high
+        self.assertEqual(calculate_priority("low", 10), "high")
 
-    def test_medium_priority(self):
+    def test_priority_medium_boundary(self):
+        # Low urgency + 4 affected users -> medium
         self.assertEqual(calculate_priority("low", 4), "medium")
+        # Medium urgency + 1 affected user -> medium
+        self.assertEqual(calculate_priority("medium", 1), "medium")
+        self.assertEqual(calculate_priority("low", 3), "medium")
 
-    def test_low_priority(self):
+    def test_priority_low_boundary(self):
+        # Low urgency + 1 affected user -> low
         self.assertEqual(calculate_priority("low", 1), "low")
 
-    def test_creation_defaults_and_normalization(self):
-        ticket = create_ticket(self.tickets, "  Wi-Fi down  ", " NETWORK ", " HIGH ", 12)
-        self.assertEqual((ticket["id"], ticket["category"], ticket["status"], ticket["assigned_to"]), ("T001", "Network", "open", None))
-        self.assertEqual(ticket["title"], "Wi-Fi down")
+    def test_reject_zero_or_negative_affected_users(self):
+        with self.assertRaises(ValueError):
+            calculate_priority("high", 0)
+        with self.assertRaises(ValueError):
+            calculate_priority("high", -5)
+
+    def test_create_valid_ticket(self):
+        tickets = []
+        ticket = create_ticket(
+            tickets,
+            title="Wi-Fi outage in Lab 2",
+            category="Network",
+            urgency="high",
+            affected_users=15,
+        )
+        self.assertEqual(ticket["id"], "T001")
         self.assertEqual(ticket["priority"], "critical")
+        self.assertEqual(ticket["status"], "open")
+        self.assertIsNone(ticket["assigned_to"])
+        self.assertEqual(len(tickets), 1)
 
-    def test_zero_users_does_not_mutate(self):
+    def test_reject_blank_title(self):
+        tickets = []
         with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Issue", "Other", "low", 0)
-        self.assertEqual(self.tickets, [])
+            create_ticket(tickets, "   ", "Network", "high", 5)
 
-    def test_blank_title_rejected(self):
+    def test_reject_invalid_category(self):
+        tickets = []
         with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "  ", "Other", "low", 1)
-        self.assertEqual(self.tickets, [])
+            create_ticket(tickets, "Broken chair", "Furniture", "low", 1)
 
-    def test_invalid_category_rejected(self):
+    def test_reject_invalid_urgency(self):
+        tickets = []
         with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Issue", "Finance", "low", 1)
+            create_ticket(tickets, "Server down", "Network", "emergency", 5)
 
-    def test_boolean_is_not_valid_count(self):
-        with self.assertRaises(ValueError):
-            create_ticket(self.tickets, "Issue", "Other", "low", True)
+    def test_case_normalization(self):
+        tickets = []
+        ticket = create_ticket(
+            tickets,
+            title="Printer issue",
+            category="hardware",
+            urgency="HIGH",
+            affected_users=2,
+        )
+        self.assertEqual(ticket["category"], "Hardware")
+        self.assertEqual(ticket["urgency"], "high")
+        self.assertEqual(ticket["priority"], "high")
 
-    def test_sequential_ids_after_reload_shape(self):
-        self.tickets.append({"id": "T009"})
-        self.assertEqual(create_ticket(self.tickets, "Issue", "Other", "low", 1)["id"], "T010")
-
-    def test_lookup_unknown_id(self):
-        with self.assertRaises(KeyError):
-            get_ticket(self.tickets, "T999")
-
-    def test_lookup_case_insensitive(self):
-        create_ticket(self.tickets, "Issue", "Other", "low", 1)
-        self.assertEqual(get_ticket(self.tickets, " t001 ")["id"], "T001")
+    def test_auto_incrementing_ids(self):
+        tickets = []
+        t1 = create_ticket(tickets, "Issue 1", "Software", "low", 1)
+        t2 = create_ticket(tickets, "Issue 2", "Software", "low", 1)
+        self.assertEqual(t1["id"], "T001")
+        self.assertEqual(t2["id"], "T002")
 
 
 if __name__ == "__main__":

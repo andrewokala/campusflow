@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/tickets.json
+.pytest_cache/
