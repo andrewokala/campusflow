@@ -6,12 +6,12 @@ This document records the architectural agreements and function contracts betwee
 
 ## 1. Division of Responsibilities
 
-* **Engineer A:**
+* **Engineer A (Andrew Okala):**
   * Feature F1 (Ticket Creation & Validation)
   * Feature F1 Priority Calculation Engine (`calculate_priority`)
   * Feature F2 (Ticket Listing & Viewing)
   * Automated tests in `tests/test_tickets.py`
-* **Engineer B:**
+* **Engineer B (Victor Ejike):**
   * Feature F3 (Ticket Assignment — `assign_ticket`)
   * Feature F4 (Status Transitions & Reopening — `change_status`, `reopen_ticket`)
   * Feature F5 (Work Queue Prioritization — `get_work_queue`)

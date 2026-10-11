@@ -4,7 +4,7 @@ This document records the AI-assisted learning cycles and critical evaluations c
 
 ---
 
-## Fellow: Engineer B (Workflow, Lifecycle, Queue, & Reports)
+## Fellow: Victor Ejike (Engineer B — Workflow, Lifecycle, Queue, & Reports)
 
 ### Interaction #1 — Multi-key Sorting & Priority Tie-Breaking in Python
 * **Problem:** In Feature F5 (`get_work_queue`), tickets must be sorted by custom priority hierarchy (`critical` $\rightarrow$ `high` $\rightarrow$ `medium` $\rightarrow$ `low`), and ties must be broken by earlier numeric ID (e.g., `T002` before `T010`, rather than alphabetical string sorting where `"T010"` might precede `"T02"`).
