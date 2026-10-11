@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-CampusFlow — Interactive Command-Line Helpdesk Ticket Manager
-"""
 
 import sys
 from campusflow.storage import load_tickets, save_tickets, DEFAULT_DATA_FILE
