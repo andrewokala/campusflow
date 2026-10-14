@@ -75,24 +75,25 @@ def reopen_ticket(tickets, ticket_id):
 
 
 
+
 def get_work_queue(tickets):
+    """Return open tickets sorted by priority, then numeric ticket ID."""
     priority_order = {
         "critical": 0,
         "high": 1,
         "medium": 2,
-        "low": 3
+        "low": 3,
     }
 
-    queue = [
+    open_tickets = [
         ticket for ticket in tickets
-        if ticket["status"].lower() in ("open", "in_progress")
+        if ticket.get("status", "").lower() == "open"
     ]
 
-    queue.sort(
+    return sorted(
+        open_tickets,
         key=lambda ticket: (
-            priority_order.get(ticket["priority"].lower(), 99),
-            int(ticket["id"][1:]) if ticket["id"][1:].isdigit() else ticket["id"]
-        )
+            priority_order.get(ticket.get("priority", "").lower(), 99),
+            int(ticket["id"][1:]),
+        ),
     )
-
-    return queue
