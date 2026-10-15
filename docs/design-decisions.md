@@ -100,3 +100,34 @@ Each ticket is represented as a Python dictionary with normalized lowercase fiel
 ### `format_report(summary_or_tickets) -> str`
 * **Input:** `summary: dict` or `tickets: list[dict]`
 * **Behavior:** Returns a formatted human-readable string suitable for CLI display.
+
+
+---
+
+## 4. CampusFlow Next — Engineer A Addendum
+
+*This section is appended to preserve all original design decisions. Where earlier statements describe the first version, the following records the new implementation and compatibility decisions.*
+
+### 4.1 Ownership and backward compatibility
+- Engineer A owns ticket safety, note business logic, validation and JSON integrity. Engineer B retains search, reports and user-facing CLI ownership.
+- Existing function signatures and modules are preserved where practical to reduce merge conflicts; Engineer B should review shared interfaces before merging.
+- The original CLI currently expects note keys `content` and `created_at`; the new note schema requires `note_id`, `author`, `message`. New notes include both sets of fields for backward compatibility. The duplication is intentional but should be revisited if the CLI is updated.
+- The existing list-of-dictionaries collection is retained. Business functions receive `tickets` explicitly rather than using a global collection.
+
+### 4.2 Note creation contract
+- `add_note(tickets, ticket_id, author, content)` uses the CLI-compatible parameter `content` but stores the canonical `message` key as well.
+- Notes are allowed only on `open` and `in_progress` tickets; `resolved` tickets must be explicitly reopened.
+- Author must be nonblank; trimmed message must contain 5–300 characters. Validation occurs before appending; rejected requests must not change data or consume a note ID.
+- `next_note_id(ticket)` computes the highest existing numeric per-ticket note ID plus one, formatted as `N001`, `N002`, etc. `get_notes` returns notes ordered numerically without reordering stored notes.
+
+### 4.3 Ticket safety and lifecycle
+- Ticket creation initializes `notes` to an empty list. Original urgency/affected-user priority precedence is retained.
+- Assignment to resolved tickets is rejected; an unassigned ticket cannot move from `open` to `in_progress`. Invalid status requests raise a friendly `ValueError` rather than modifying the ticket.
+- Validation before mutation is a shared invariant; tests compare deep copies of state after rejected actions.
+
+### 4.4 JSON persistence and validation
+- `save_tickets(tickets, filepath)` validates data before writing and uses a temporary file plus `os.replace` to reduce partially written destination files.
+- `load_tickets(filepath)` validates decoded records before returning them; malformed JSON, duplicate IDs, invalid note IDs, invalid shapes and inconsistent priority are rejected rather than silently accepted.
+- A caller should replace its in-memory collection only after `load_tickets` succeeds. The function returns a new collection; it does not mutate a caller's existing list on failure.
+- JSON retains all ticket and note fields; ticket and note IDs are generated using the highest existing numeric ID to avoid collisions in the retained dataset.
+

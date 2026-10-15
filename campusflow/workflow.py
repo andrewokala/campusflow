@@ -33,7 +33,9 @@ def change_status(tickets, ticket_id, new_status):
     if ticket["status"].lower() == "resolved":
         raise ValueError("Reopen ticket before modifying it.")
 
-    status_target = new_status.lower()
+    if not isinstance(new_status, str):
+        raise ValueError("Status must be text.")
+    status_target = new_status.strip().lower()
 
     if status_target == "in_progress":
         if ticket["status"].lower() != "open":

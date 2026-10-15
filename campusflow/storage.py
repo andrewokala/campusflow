@@ -12,6 +12,7 @@ VALID_CATEGORIES = {"network", "hardware", "software", "other"}
 VALID_URGENCIES = {"low", "medium", "high"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low"}
 VALID_STATUSES = {"open", "in_progress", "resolved"}
+from campusflow.tickets import calculate_priority
 
 
 def validate_ticket(ticket, index):
@@ -51,6 +52,30 @@ def validate_ticket(ticket, index):
     users = ticket["affected_users"]
     if isinstance(users, bool) or not isinstance(users, int) or users <= 0:
         raise ValueError(f"{label} must have a positive integer affected_users.")
+
+    if ticket["priority"] != calculate_priority(ticket["urgency"], users):
+        raise ValueError(f"{label} has priority inconsistent with urgency and users.")
+    if ticket["category"].lower() not in VALID_CATEGORIES:
+        raise ValueError(f"{label} has noncanonical category.")
+    if ticket["urgency"] not in VALID_URGENCIES or ticket["status"] not in VALID_STATUSES:
+        raise ValueError(f"{label} has noncanonical urgency/status.")
+    if ticket["status"] == "in_progress" and not ticket["assigned_to"]:
+        raise ValueError(f"{label} is in progress without assignment.")
+    notes = ticket.get("notes", [])  # Old records without notes remain supported.
+    if not isinstance(notes, list):
+        raise ValueError(f"{label} notes must be a list.")
+    seen_notes = set()
+    for note in notes:
+        if not isinstance(note, dict) or not {"note_id", "author", "message"} <= note.keys():
+            raise ValueError(f"{label} contains an invalid note.")
+        nid = note["note_id"]
+        if not isinstance(nid, str) or not re.fullmatch(r"N\d{3,}", nid) or nid in seen_notes:
+            raise ValueError(f"{label} contains duplicate or invalid note ID.")
+        seen_notes.add(nid)
+        if not isinstance(note["author"], str) or not note["author"].strip():
+            raise ValueError(f"{label} has an invalid note author.")
+        if not isinstance(note["message"], str) or not 5 <= len(note["message"].strip()) <= 300:
+            raise ValueError(f"{label} has an invalid note message.")
 
     assigned = ticket["assigned_to"]
     if assigned is not None and (

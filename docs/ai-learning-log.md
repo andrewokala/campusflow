@@ -2,7 +2,6 @@
 
 This document records the AI-assisted learning cycles and critical evaluations conducted during the sprint.
 
----
 
 ## Fellow: Victor Ejike (Engineer B — Workflow, Lifecycle, Queue, & Reports)
 
@@ -28,7 +27,7 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **Related file/commit:** `campusflow/workflow.py` (`get_work_queue`), `tests/test_workflow.py`.
 * **What I can now explain without AI:** How Python tuple comparisons work for multi-criteria sorting and how to extract integer values from formatted string identifiers for numeric ordering.
 
----
+
 
 ### Interaction #2 — Structuring Report Aggregations and Empty-State Handling
 * **Problem:** In Feature F6 (`campusflow/reports.py`), the system must summarize ticket totals and breakdowns by status and priority, and must handle zero tickets (`[]`) gracefully without crashing or throwing missing key errors.
@@ -46,7 +45,7 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **Related file/commit:** `campusflow/reports.py`, `tests/test_reports.py`.
 * **What I can now explain without AI:** How pre-defining schema dictionaries prevents missing-key errors and simplifies consumer code (like CLI renderers) when processing empty collections.
 
----
+
 
 ### Interaction #3 — State Machine Invariants & Catching Flawed AI Logic (CRITICAL EVALUATION)
 * **Problem:** In Feature F4 (`change_status` and `reopen_ticket`), we need to strictly enforce lifecycle transitions (`open` $\rightarrow$ `in_progress` $\rightarrow$ `resolved`), reject unassigned tickets from entering `in_progress`, and prevent direct modification of resolved tickets without reopening.
@@ -72,3 +71,72 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **Decision:** **REJECTED and CORRECTED the AI suggestions.**
 * **Related file/commit:** `campusflow/workflow.py`, `tests/test_workflow.py`.
 * **What I can now explain without AI:** How to design invariant checks in state machine transitions, the necessity of case normalization when inspecting dictionary values, and why rigorous unit tests are non-negotiable when evaluating AI-generated code.
+
+
+## Fellow: Engineer A — Onminyi Andrew Okala
+
+### CampusFlow Next — AI-assisted learning record (draft; verify independently)
+
+**Context:** The following entries distinguish discussion and assistant-run tests from experiments personally executed by Engineer A. Do not present an assistant-run test as your own terminal verification.
+
+### Interaction #1 — Validate before mutation and note-state safety
+
+**Problem:** Understand why note status, author and message must be checked before appending to a ticket.
+
+**My initial understanding:** I answered that validation checks whether required fields are available. I still need to account for valid *values* and allowed ticket status, not merely presence.
+
+**Prompt to AI:** "So as to check if the required fields are available" (my response to the assistant's question about why `add_note()` validates status before appending).
+
+**Useful AI guidance:** A resolved ticket cannot accept notes until reopened. Validation must check the allowed status and content before changing the ticket, so rejection leaves the entire collection unchanged.
+
+**My independent experiment/test:** **Pending personal run.** Run `python -m unittest tests.test_engineer_a_next -v` if the tests directory is importable, or `python -m unittest discover -s tests -p 'test_engineer_a_next.py' -v`. Inspect `test_note_ids_and_reopen` and `test_invalid_note_does_not_consume_id`.
+
+**Verification source or result:** Automated test names are present in `tests/test_engineer_a_next.py`; personal terminal output **not yet supplied**. Record actual output after running.
+
+**Decision:** Provisional acceptance of validate-before-mutate; finalize after independent test execution.
+
+**Related file/commit:** `campusflow/notes.py`, `tests/test_engineer_a_next.py` (commit SHA pending).
+
+**What I can now explain without AI:** I initially focused on required fields. I can explain that a note also needs a permitted ticket status and valid content; otherwise adding it would violate the workflow. (Review this wording and revise in your own voice.)
+
+### Interaction #2 — Duplicate ticket IDs and JSON integrity
+
+**Problem:** Understand why successfully decoded JSON can still be unsafe to load.
+
+**My initial understanding:** I answered that duplicate IDs should not be accepted because they conflict with each other.
+
+**Prompt to AI:** "it shouldn't because it will conflict each other" (my answer to whether two tickets with the same ID should be accepted).
+
+**Useful AI guidance:** JSON decoding checks syntax, not uniqueness or consistency. Validate the full loaded collection before using it; reject duplicates without changing the current in-memory list.
+
+**My independent experiment/test:** **Pending personal run.** Create a temporary JSON file containing two otherwise valid tickets with the same ID, call `load_tickets(path)`, and confirm `ValueError` occurs. Check that an existing `tickets` list remains unchanged. Do not overwrite a real data file.
+
+**Verification source or result:** `campusflow/storage.py` contains load validation. Actual experiment output **pending**. Relevant existing tests include storage validation and `test_corrupt_load_does_not_change_memory`.
+
+**Decision:** Provisional acceptance of full-collection validation; finalize after the duplicate-ID experiment.
+
+**Related file/commit:** `campusflow/storage.py`, `tests/test_engineer_a_next.py`, `tests/test_storage_validation.py` (commit SHA pending).
+
+**What I can now explain without AI:** Duplicate IDs make it ambiguous which ticket an operation refers to. Valid JSON syntax alone does not guarantee valid ticket records. (Revise after your experiment.)
+
+### Interaction #3 — Numeric ID continuity for notes
+
+**Problem:** Understand how to choose a new note ID without colliding with existing IDs.
+
+**My initial understanding:** I answered that IDs N001 and N003 should lead to N004 by adding one to the last ID. More precisely, the implementation uses the **highest numeric ID**, not necessarily the last list entry.
+
+**Prompt to AI:** "{"note_id": "N004"} because it will check the last enter ID and add 1 to it making the next ID." (my answer to the ID continuity question).
+
+**Useful AI guidance:** Extract numeric portions of all existing note IDs and use maximum + 1; do not rely on list length or insertion order.
+
+**My independent experiment/test:** **Pending personal run.** In a Python shell, call `next_note_id({"notes": [{"note_id": "N003"}, {"note_id": "N001"}]})` and predict `N004` before running it.
+
+**Verification source or result:** `test_reload_preserves_notes_and_next_ids` covers note continuity after JSON reload. Personal execution and observed output **pending**.
+
+**Decision:** Improve my earlier explanation from "last entered ID" to "highest numeric ID". This is a conceptual correction based on inspecting the implementation; independent verification is still pending.
+
+**Related file/commit:** `campusflow/notes.py`, `tests/test_engineer_a_next.py` (commit SHA pending).
+
+**What I can now explain without AI:** The next note ID should be one greater than the largest existing note number, even if notes are out of order. (Confirm with the experiment.)
+
+**Submission reminder:** The CampusFlow Next guide requires at least two genuine, independently verified AI learning cycles per engineer. These draft records are not substitutes for personal experiments or exact historical prompts where no prompt was actually sent.
