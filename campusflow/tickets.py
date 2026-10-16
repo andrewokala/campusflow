@@ -39,7 +39,7 @@ def generate_ticket_id(tickets):
     max_num = 0
     for ticket in tickets:
         tid = ticket.get("id", "")
-        digits = "".join(ch for ch in tid if ch.isdigit())
+        digits = tid[1:] if isinstance(tid, str) and tid.startswith("T") and tid[1:].isdigit() else ""
         if digits:
             num = int(digits)
             if num > max_num:
@@ -103,5 +103,6 @@ def create_ticket(tickets, title, category, urgency, affected_users):
         "assigned_to": None,
     }
 
+    ticket["notes"] = []
     tickets.append(ticket)
     return ticket

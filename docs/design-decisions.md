@@ -100,3 +100,45 @@ Each ticket is represented as a Python dictionary with normalized lowercase fiel
 ### `format_report(summary_or_tickets) -> str`
 * **Input:** `summary: dict` or `tickets: list[dict]`
 * **Behavior:** Returns a formatted human-readable string suitable for CLI display.
+
+
+---
+
+## 4. CampusFlow Next — Engineer A Addendum (2026-10-15)
+
+*This section is appended to preserve all original design decisions. Where earlier statements describe the first version, the following records the new implementation and compatibility decisions.*
+
+### 4.1 Ownership and backward compatibility
+- Engineer A owns ticket safety, note business logic, validation and JSON integrity. Engineer B retains search, reports and user-facing CLI ownership.
+- Existing function signatures and modules are preserved where practical to reduce merge conflicts; Engineer B should review shared interfaces before merging.
+- The original CLI currently expects note keys `content` and `created_at`; the new note schema requires `note_id`, `author`, `message`. New notes include both sets of fields for backward compatibility. The duplication is intentional but should be revisited if the CLI is updated.
+- The existing list-of-dictionaries collection is retained. Business functions receive `tickets` explicitly rather than using a global collection.
+
+### 4.2 Note creation contract
+- `add_note(tickets, ticket_id, author, content)` uses the CLI-compatible parameter `content` but stores the canonical `message` key as well.
+- Notes are allowed only on `open` and `in_progress` tickets; `resolved` tickets must be explicitly reopened.
+- Author must be nonblank; trimmed message must contain 5–300 characters. Validation occurs before appending; rejected requests must not change data or consume a note ID.
+- `next_note_id(ticket)` computes the highest existing numeric per-ticket note ID plus one, formatted as `N001`, `N002`, etc. `get_notes` returns notes ordered numerically without reordering stored notes.
+
+### 4.3 Ticket safety and lifecycle
+- Ticket creation initializes `notes` to an empty list. Original urgency/affected-user priority precedence is retained.
+- Assignment to resolved tickets is rejected; an unassigned ticket cannot move from `open` to `in_progress`. Invalid status requests raise a friendly `ValueError` rather than modifying the ticket.
+- Validation before mutation is a shared invariant; tests compare deep copies of state after rejected actions.
+
+### 4.4 JSON persistence and validation
+- `save_tickets(tickets, filepath)` validates data before writing and uses a temporary file plus `os.replace` to reduce partially written destination files.
+- `load_tickets(filepath)` validates decoded records before returning them; malformed JSON, duplicate IDs, invalid note IDs, invalid shapes and inconsistent priority are rejected rather than silently accepted.
+- A caller should replace its in-memory collection only after `load_tickets` succeeds. The function returns a new collection; it does not mutate a caller's existing list on failure.
+- JSON retains all ticket and note fields; ticket and note IDs are generated using the highest existing numeric ID to avoid collisions in the retained dataset.
+
+### 4.5 Verification and integration limitations
+- Engineer A regression coverage is in `tests/test_engineer_a_next.py`. Execute the full suite after merging, not only A's tests.
+- This addendum does not claim a manual CLI walkthrough, a completed GitHub review, or independent fellow-run verification.
+- **Open integration check:** The earlier `get_work_queue` specification above includes `in_progress`, but the CampusFlow Next guide explicitly requires the original Open Work Queue to contain only `open` tickets. Engineer B should confirm and correct that separately if the existing implementation still includes `in_progress`.
+- **Open integration check:** Engineer B's CLI should expose the required add/view notes features and handle errors without crashing; tests passing in isolation do not prove all menu paths work.
+
+### PR review follow-up — canonical note message (Engineer A / Engineer B)
+- Accepted review feedback: new notes store only `note_id`, `author`, `message`; removed duplicated `content` and optional `created_at` from newly created notes.
+- The existing CLI note creation and display now read `message`, display `note_id`, and do not require timestamps.
+- Existing saved JSON files are not rewritten automatically. Older note dictionaries containing `content`/`created_at` remain loadable when they also contain valid `message`, but are preserved as-is until a separately reviewed migration is approved. Legacy records with only `content` are not supported by strict load validation; back up and migrate those records explicitly before loading.
+- Verification: 60 unittest tests passed locally after the change; review and rerun on the feature branch before merging.

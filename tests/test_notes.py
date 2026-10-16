@@ -20,8 +20,8 @@ class TestTicketNotes(unittest.TestCase):
     def test_add_note(self):
         note = add_note(self.tickets, "T001", "Victor", "Investigating.")
         self.assertEqual(note["author"], "Victor")
-        self.assertEqual(note["content"], "Investigating.")
-        self.assertIn("created_at", note)
+        self.assertEqual(note["message"], "Investigating.")
+        self.assertEqual(set(note), {"note_id", "author", "message"})
         self.assertEqual(len(get_notes(self.tickets, "T001")), 1)
 
     def test_reject_blank_note(self):

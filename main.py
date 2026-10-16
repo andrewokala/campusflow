@@ -235,12 +235,12 @@ def handle_ticket_notes(tickets):
 
     if action == "1":
         author = input("Your name: ").strip()
-        content = input("Note: ").strip()
+        message = input("Note: ").strip()
 
         try:
-            note = add_note(tickets, ticket_id, author, content)
+            note = add_note(tickets, ticket_id, author, message)
             save_tickets(tickets)
-            print(f"\nNote added at {note['created_at']}.\n")
+            print(f"\nNote {note['note_id']} added.\n")
         except ValueError as err:
             print(f"\nError: {err}\n")
 
@@ -255,9 +255,9 @@ def handle_ticket_notes(tickets):
 
         for note in notes:
             print(
-                f"[{note.get('created_at', 'Unknown time')}] "
+                f"[{note['note_id']}] "
                 f"{note.get('author', 'Unknown author')}: "
-                f"{note.get('content', '')}"
+                f"{note['message']}"
             )
 
         print()
