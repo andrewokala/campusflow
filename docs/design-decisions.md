@@ -104,7 +104,7 @@ Each ticket is represented as a Python dictionary with normalized lowercase fiel
 
 ---
 
-## 4. CampusFlow Next — Engineer A Addendum
+## 4. CampusFlow Next — Engineer A Addendum (2026-10-15)
 
 *This section is appended to preserve all original design decisions. Where earlier statements describe the first version, the following records the new implementation and compatibility decisions.*
 
@@ -131,3 +131,14 @@ Each ticket is represented as a Python dictionary with normalized lowercase fiel
 - A caller should replace its in-memory collection only after `load_tickets` succeeds. The function returns a new collection; it does not mutate a caller's existing list on failure.
 - JSON retains all ticket and note fields; ticket and note IDs are generated using the highest existing numeric ID to avoid collisions in the retained dataset.
 
+### 4.5 Verification and integration limitations
+- Engineer A regression coverage is in `tests/test_engineer_a_next.py`. Execute the full suite after merging, not only A's tests.
+- This addendum does not claim a manual CLI walkthrough, a completed GitHub review, or independent fellow-run verification.
+- **Open integration check:** The earlier `get_work_queue` specification above includes `in_progress`, but the CampusFlow Next guide explicitly requires the original Open Work Queue to contain only `open` tickets. Engineer B should confirm and correct that separately if the existing implementation still includes `in_progress`.
+- **Open integration check:** Engineer B's CLI should expose the required add/view notes features and handle errors without crashing; tests passing in isolation do not prove all menu paths work.
+
+### PR review follow-up — canonical note message (Engineer A / Engineer B)
+- Accepted review feedback: new notes store only `note_id`, `author`, `message`; removed duplicated `content` and optional `created_at` from newly created notes.
+- The existing CLI note creation and display now read `message`, display `note_id`, and do not require timestamps.
+- Existing saved JSON files are not rewritten automatically. Older note dictionaries containing `content`/`created_at` remain loadable when they also contain valid `message`, but are preserved as-is until a separately reviewed migration is approved. Legacy records with only `content` are not supported by strict load validation; back up and migrate those records explicitly before loading.
+- Verification: 60 unittest tests passed locally after the change; review and rerun on the feature branch before merging.

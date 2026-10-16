@@ -92,3 +92,23 @@ class TestEngineerANext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ValueError):
                 save_tickets(self.tickets, os.path.join(d, 'tickets.json'))
+
+
+class CanonicalNoteSchemaTests(unittest.TestCase):
+    def test_note_has_single_message_field(self):
+        tickets = []
+        create_ticket(tickets, "Router down", "Network", "high", 12)
+        note = add_note(tickets, "T001", "Ada", "Checking network")
+        self.assertEqual(set(note), {"note_id", "author", "message"})
+        self.assertEqual(note["message"], "Checking network")
+
+    def test_canonical_note_survives_json_round_trip(self):
+        tickets = []
+        create_ticket(tickets, "Router down", "Network", "high", 12)
+        add_note(tickets, "T001", "Ada", "Checking network")
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "tickets.json")
+            save_tickets(tickets, path)
+            loaded = load_tickets(path)
+        self.assertEqual(loaded[0]["notes"], tickets[0]["notes"])
+        self.assertNotIn("content", loaded[0]["notes"][0])

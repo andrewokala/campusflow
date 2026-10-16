@@ -2,6 +2,7 @@
 
 This document records the AI-assisted learning cycles and critical evaluations conducted during the sprint.
 
+---
 
 ## Fellow: Victor Ejike (Engineer B — Workflow, Lifecycle, Queue, & Reports)
 
@@ -27,7 +28,7 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **Related file/commit:** `campusflow/workflow.py` (`get_work_queue`), `tests/test_workflow.py`.
 * **What I can now explain without AI:** How Python tuple comparisons work for multi-criteria sorting and how to extract integer values from formatted string identifiers for numeric ordering.
 
-
+---
 
 ### Interaction #2 — Structuring Report Aggregations and Empty-State Handling
 * **Problem:** In Feature F6 (`campusflow/reports.py`), the system must summarize ticket totals and breakdowns by status and priority, and must handle zero tickets (`[]`) gracefully without crashing or throwing missing key errors.
@@ -45,7 +46,7 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **Related file/commit:** `campusflow/reports.py`, `tests/test_reports.py`.
 * **What I can now explain without AI:** How pre-defining schema dictionaries prevents missing-key errors and simplifies consumer code (like CLI renderers) when processing empty collections.
 
-
+---
 
 ### Interaction #3 — State Machine Invariants & Catching Flawed AI Logic (CRITICAL EVALUATION)
 * **Problem:** In Feature F4 (`change_status` and `reopen_ticket`), we need to strictly enforce lifecycle transitions (`open` $\rightarrow$ `in_progress` $\rightarrow$ `resolved`), reject unassigned tickets from entering `in_progress`, and prevent direct modification of resolved tickets without reopening.
@@ -73,7 +74,9 @@ This document records the AI-assisted learning cycles and critical evaluations c
 * **What I can now explain without AI:** How to design invariant checks in state machine transitions, the necessity of case normalization when inspecting dictionary values, and why rigorous unit tests are non-negotiable when evaluating AI-generated code.
 
 
-## Fellow: Engineer A — Onminyi Andrew Okala
+---
+
+## Fellow: Engineer A — [enter your name]
 
 ### CampusFlow Next — AI-assisted learning record (draft; verify independently)
 
@@ -140,3 +143,10 @@ This document records the AI-assisted learning cycles and critical evaluations c
 **What I can now explain without AI:** The next note ID should be one greater than the largest existing note number, even if notes are out of order. (Confirm with the experiment.)
 
 **Submission reminder:** The CampusFlow Next guide requires at least two genuine, independently verified AI learning cycles per engineer. These draft records are not substitutes for personal experiments or exact historical prompts where no prompt was actually sent.
+
+### Engineer A — PR review learning follow-up (complete personal verification before submission)
+**Problem:** Duplicate `message` and `content` values in a note can diverge.
+**Review feedback:** Engineer B suggested changing the CLI to read the canonical `message` field.
+**Engineering decision:** Accepted the suggestion. The note business layer now writes one message field; the CLI reads it; tests assert the schema and JSON round-trip.
+**Verification performed in this working copy:** `python -m unittest discover -s tests -q` — 60 tests, OK.
+**Individual verification still needed:** Run the tests yourself, inspect the PR diff, and record your actual CLI demonstration and what you learned in your own words.
